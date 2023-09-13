@@ -1,0 +1,63 @@
+---
+title: "codebook"
+author: "Abigail White"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Weird Al Songs and Originals Data
+
+### Description
+
+The majority of my data including the artists, album names and dates and number of streams was collected from Spotify, and the top ranks on the Billboard Hot 100 Charts was collected from the Billboard website.  
+
+This is how to format the `name of a variable`.
+
+### Usage
+
+`weird_al`
+
+### Format
+
+  A tibble with 130 rows and 10 variables.
+
+`song_title`
+
+  Title of the Song
+      
+`album`
+
+  Title of the Album
+      
+`album_year`
+
+  Year the album was released
+      
+`album_date`
+
+  Date the album was released
+      
+`runtime`
+
+  Length of the song
+      
+`artist`
+
+  Artist of the song
+      
+`spotify_streams`
+
+  Number of streams on Spotify
+      
+`parody`
+    Whether or not the song is a parody
+      
+`billboard_rank`
+     Top rank on the Billboard Hot 100 Chart
+      
+`genre`
+     Genre of the song

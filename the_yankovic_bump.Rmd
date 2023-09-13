@@ -1,0 +1,369 @@
+---
+title: "The Yankovic Bump"
+author: "Abigail White"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load-packages, message = FALSE, eval = TRUE}
+library(tidyverse)
+library(readxl)
+library(gt)
+```
+
+```{r load-data, message = FALSE, eval = TRUE}
+weird_al_songs <- read_excel("data/weird_al_songs.xlsx", 
+    col_types = c("text", "text", "numeric", 
+        "date", "numeric", "text", "numeric", 
+        "text", "numeric", "text"))
+original_songs <- read_excel("data/original_songs.xlsx", 
+    col_types = c("text", "text", "numeric", 
+        "date", "numeric", "text", "numeric", 
+        "text", "numeric", "text"))
+```
+
+**joining the datasets ?**
+
+```{r join, eval=TRUE}
+all_songs <- weird_al_songs %>%
+  full_join(original_songs)
+```
+
+```{r top_5_genres, eval = TRUE}
+original_songs %>%
+  count(genre) %>%
+  arrange(desc(n)) %>%
+  slice(1:5) %>%
+  gt() %>%
+  tab_header(title = "Most Popular Genres of Original Songs",
+             subtitle = "Top Five")%>%
+  cols_label(genre = "Genre", n = "Total Songs")
+```
+
+**shows the 5 genres that have been parodied the most**
+
+```{r decades}
+weird_al_songs <- weird_al_songs %>%
+  mutate(decade = case_when(album_year >= 1960 & album_year < 1970 ~ "60s",
+                            album_year >= 1970 & album_year < 1980 ~ "70s",
+                            album_year >= 1980 & album_year < 1990 ~ "80s",
+                            album_year >= 1990 & album_year < 2000 ~ "90s",
+                            album_year >= 2000 & album_year < 2010 ~ "2000s",
+                            album_year >= 2010 & album_year < 2020 ~ "2010s",
+                            album_year >= 2020 & album_year < 2030 ~ "2020s")) 
+
+original_songs <- original_songs %>%
+  mutate(decade = case_when(album_year >= 1960 & album_year < 1970 ~ "60s",
+                            album_year >= 1970 & album_year < 1980 ~ "70s",
+                            album_year >= 1980 & album_year < 1990 ~ "80s",
+                            album_year >= 1990 & album_year < 2000 ~ "90s",
+                            album_year >= 2000 & album_year < 2010 ~ "2000s",
+                            album_year >= 2010 & album_year < 2020 ~ "2010s",
+                            album_year >= 2020 & album_year < 2030 ~ "2020s")) 
+```
+
+```{r count_decades, eval = TRUE}
+weird_al_songs %>%
+  count(decade) %>%
+  arrange(desc(n)) %>%
+  gt() %>%
+  tab_header(title = "Parodies From Each Decade") %>%
+  cols_label(decade = "Decade", n = "Total Parodies")
+```
+
+**Counting parodies from each decade**
+
+```{r count_decades_originals, eval = TRUE}
+original_songs %>%
+  count(decade) %>%
+  arrange(desc(n)) %>%
+  gt() %>%
+  tab_header(title = "Original Songs From Each Decade") %>%
+  cols_label(decade = "Decade", n = "Total Parodies")
+```
+
+**counting original songs from each decade**
+
+```{r plots, eval = TRUE}
+all_songs <- weird_al_songs %>%
+  full_join(original_songs)
+
+all_songs %>%
+  ggplot(aes(x = album_year, y = spotify_streams, color = parody)) +
+  geom_jitter() +
+  scale_color_manual(values = c("Yes" = "#189bcc", "No" = "#ea213a")) +
+  labs(title = "Spotify Streams by Year", subtitle = "Parodies & Originals", x = "Album Year", y = "Spotify Streams", color = "Parody?") +
+  theme_bw()
+
+all_songs %>%
+  ggplot(aes(x = album_year, y = spotify_streams, color = parody)) +
+  geom_jitter() +
+  scale_color_manual(values = c("Yes" = "#189bcc", "No" = "#ea213a")) +
+  labs(title = "Spotify Streams by Year", subtitle = "Parodies & Originals", x = "Album Year", y = "Spotify Streams", color = "Parody?") +
+  theme_bw() +
+  scale_y_continuous(trans = 'log10')
+```
+
+```{r}
+weird_al_songs %>%
+  ggplot(aes(x = album_year, y = spotify_streams)) +
+  geom_jitter(color = "#189bcc") +
+  labs(title = "Spotify Streams by Year", subtitle = "Parodies & Originals", x = "Album Year", y = "Spotify Streams") +
+  theme_bw()
+```
+
+**plotting to see how the amount of streams on spotify correlates to the year the song was released, if any pattern**
+
+```{r count_billboard_hits, eval = TRUE}
+original_songs %>%
+  select(song_title, billboard_rank) %>%
+  count(billboard_rank) %>%
+  arrange(billboard_rank) %>%
+  slice(1:3) %>%
+  gt() %>%
+  tab_header(title = "Originals Billboard Chart Ranks") %>%
+  cols_label(billboard_rank = "Bilbaord Rank", n = "Total Songs")
+```
+
+**counting how many of the parodied songs were in the top three ranks on the Billboard Charts**
+
+```{r weird_al_by_album}
+ weird_al_songs %>%
+  group_by(album) %>%
+  summarize(album_streams = sum(spotify_streams)) %>%
+  ggplot(aes(x = album, y = album_streams)) +
+  geom_bar(stat = "identity", fill = "#189bcc") +
+  labs(title = "Spotify Streams by Album", x = "Album Title", y = "Number of Streams") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 50, hjust=1))
+```
+
+**showing number of spotify streams by weird al album**
+
+```{r}
+original_songs %>%
+  select(song_title, billboard_rank, artist) %>%
+  count(billboard_rank) %>%
+  slice(1:5) %>%
+  gt() %>%
+  tab_header(title = "Billboard Ranks",
+             subtitle = "Ranks 1-5") %>%
+  cols_label(billboard_rank = "Billboard Rank", n = "Total Songs")
+```
+
+**count of original songs by billboard rank 1-5**
+
+```{r}
+weird_al_songs %>%
+  select(song_title, billboard_rank) %>%
+  count(billboard_rank) %>%
+  slice(1:5) %>%
+  gt() %>%
+  tab_header(title = "Parody Billboard Ranks") %>%
+  cols_label(billboard_rank = "Bilboard Rank", n = "Total Songs")
+```
+
+**count of parodies by billboard rank**
+
+```{r}
+original_songs %>%
+  select(song_title, spotify_streams) %>%
+  arrange(desc(spotify_streams)) %>%
+  slice(1:5) %>%
+  gt() %>%
+  tab_header(title = "Top Streamed Originals") %>%
+  cols_label(song_title = "Song Title", spotify_streams = "Total Streams")
+
+weird_al_songs %>%
+  select(song_title, spotify_streams) %>%
+  arrange(desc(spotify_streams)) %>%
+  slice(1:5) %>%
+  gt() %>%
+  tab_header(title = "Most Streamed Parodies") %>%
+  cols_label(song_title = "Song Title", spotify_streams = "Total Streams")
+```
+
+**shows top 5 most streamed parodies and originals**
+
+```{r}
+original_songs %>%
+  select(song_title, spotify_streams) %>%
+  arrange(spotify_streams) %>%
+  slice(1:5) %>%
+  gt() %>%
+  tab_header(title = "Least Streamed Originals") %>%
+  cols_label(song_title = "Song Title", spotify_streams = "Total Streams")
+
+weird_al_songs %>%
+  select(song_title, spotify_streams) %>%
+  arrange(spotify_streams) %>%
+  slice(1:5) %>%
+  gt() %>%
+  tab_header(title = "Least Streamed Parodies") %>%
+  cols_label(song_title = "Song Title", spotify_streams = "Total Streams")
+```
+
+**Shows the 5 least streamed parodies and originals**
+
+```{r}
+original_songs %>%
+  filter(genre %in% c("Alternative/Indie", "R&B/Soul", "Pop", "Hip Hop/Rap", "Rock")) %>%
+  ggplot(aes(x = genre)) +
+  geom_bar(fill = "#189bcc") +
+  labs(title = "Parodies by Genre of Original", x = "Genre", y = "Count") +
+  theme_bw()
+
+original_songs %>%
+  ggplot(aes(x = decade)) +
+  geom_bar(fill = "#189bcc") +
+  labs(title = "Parodies Released By Decade", x = "Decade", y = "Count") +
+  theme_bw()
+```
+
+**Shows how many songs from each genre and how many songs from each decade were parodied**
+
+```{r}
+weird_al_songs %>%
+  group_by(decade) %>%
+  summarise(total_streams = sum(spotify_streams)) %>%
+  gt() %>%
+  tab_header(title = "Spotify Streams by Decade") %>%
+  cols_label(decade = "Decade", n = "Total Streams")
+```
+
+**shows the total spotify streams per decade**
+
+```{r}
+weird_al_songs %>%
+  ggplot(aes(x = album_date, y = runtime)) +
+  geom_jitter() +
+  labs(title = "Parody Runtimes", x = "Album Date", y = "Runtime") +
+  theme_bw()
+
+original_songs %>%
+  ggplot(aes(x = album_date, y = runtime)) +
+  geom_point(color = "#189bcc") +
+  labs(title = "Original Song Runtime", x = "Album Date", y = "Runtime") +
+  theme_bw()
+
+all_songs %>%
+  ggplot(aes(x = album_year, y = runtime, color = parody)) +
+  geom_jitter() +
+  scale_color_manual(values = c("Yes" = "#189bcc", "No" = "#ea213a")) +
+  labs(title = "Song Runtime by Year", subtitle = "Parodies & Originals", x = "Album Year", y = "Runtime", color = "Parody?") +
+  theme_bw()
+```
+
+**shows the run time of the songs based on the date of release**
+
+```{r}
+weird_al_songs %>% 
+  group_by(decade) %>%
+  summarise(avg_runtime = mean(runtime)) %>%
+  gt() %>%
+  tab_header(title = "Average Runtime By Decade") %>% 
+  cols_label(decade = "Decade", avg_runtime = "Average Runtime")
+```
+
+```{r}
+original_songs %>%
+  filter(decade == "80s") %>%
+  count(genre) %>%
+  arrange(desc(n)) %>%
+  gt() %>%
+  tab_header(title = "Top Genre By Decade",
+             subtitle = "1980s") %>%
+  cols_label(genre = "Genre", n = "Total Songs")
+
+original_songs %>%
+  filter(decade == "90s") %>%
+  count(genre) %>%
+  arrange(desc(n)) %>%
+  gt() %>%
+  tab_header(title = "Top Genre By Decade",
+             subtitle = "1990s") %>%
+  cols_label(genre = "Genre", n = "Total Songs")
+
+original_songs %>%
+  filter(decade == "2000s") %>%
+  count(genre) %>%
+  arrange(desc(n)) %>%
+  gt() %>%
+  tab_header(title = "Top Genre By Decade",
+             subtitle = "2000s") %>%
+  cols_label(genre = "Genre", n = "Total Songs")
+
+original_songs %>%
+  filter(decade == "2010s") %>%
+  count(genre) %>%
+  arrange(desc(n)) %>%
+  gt() %>%
+  tab_header(title = "Top Genre By Decade",
+             subtitle = "2010s") %>%
+  cols_label(genre = "Genre", n = "Total Songs")
+```
+
+**Shows the genre with the most parodies in each decade**
+
+```{r}
+weird_al_songs$runtime_difference <- original_songs$runtime - weird_al_songs$runtime
+
+weird_al_songs %>%
+  select(song_title, runtime_difference) %>%
+  arrange(desc(runtime_difference)) %>%
+  slice(1:5) %>%
+  gt() %>%
+  tab_header(title = "Biggest Runtime Difference",
+             subtitle = "Original vs Parody") %>%
+  cols_label(song_title = "Song Title", runtime_difference = "Difference in Runtime")
+
+weird_al_songs %>%
+  select(song_title, runtime_difference) %>%
+  arrange(runtime_difference) %>%
+  slice(1:5) %>%
+  gt() %>%
+  tab_header(title = "Smallest Runtime Difference",
+             subtitle = "Original vs Parody") %>%
+  cols_label(song_title = "Song Title", runtime_difference = "Difference in Runtime")
+```
+
+**creates the new variable showing the difference in run times of the original song and the parody**
+
+```{r}
+original_songs %>%
+  count(artist) %>%
+  arrange(desc(n)) %>%
+  slice(1:5) %>%
+  gt() %>%
+  tab_header(title = "Top Artists Parodied") %>%
+  cols_label(artist = "Artist", n = "Total Parodies")
+```
+
+**shows the only artist parodied twice is Michael Jackson**
+
+```{r}
+weird_al_songs$streams_difference <- original_songs$spotify_streams - weird_al_songs$spotify_streams
+
+weird_al_songs %>%
+  select(song_title, streams_difference) %>%
+  arrange(desc(streams_difference)) %>%
+  slice(1:5) %>%
+  gt() %>%
+  tab_header(title = "Biggest Streams Difference",
+             subtitle = "Orignal vs Parody") %>%
+  cols_label(song_title = "Song Title", streams_difference = "Difference in Streams")
+
+weird_al_songs %>%
+  select(song_title, streams_difference) %>%
+  arrange(streams_difference) %>%
+  slice(1:5) %>%
+  gt() %>%
+  tab_header(title = "Smallest Streams Difference",
+             subtitle = "Orignal vs Parody") %>%
+  cols_label(song_title = "Song Title", streams_difference = "Difference in Streams")
+```
+
